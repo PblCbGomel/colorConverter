@@ -79,14 +79,6 @@ h1 {
   border: 1px solid white;
 }
 
-.main-color-block {
-  border: 1px solid white;
-
-  width: 140px;
-  height: 140px;
-  margin: 10px;
-}
-
 .main-color-wrapper form {
   display: flex;
   justify-content: space-around;

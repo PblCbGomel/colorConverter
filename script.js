@@ -1,3 +1,9 @@
+const colorPicker = new iro.ColorPicker(".main-color-block", {
+  width: 120,
+  color: "rgb(0, 0, 0)",
+  borderWidth: 1,
+  borderColor: "#fff",
+});
 const btnPick = document.querySelector(".pick");
 const mainSelect = document.querySelector(".main-color-select");
 const color2Select = document.querySelector(".color-2");
@@ -21,6 +27,45 @@ const label4 = document.querySelector(".label-4");
 let mainColor = [0, 0, 0];
 let color2 = [0, 0, 0];
 let color3 = [0, 0, 0];
+
+colorPicker.on("color:change", function (color) {
+  mainColor = hexToRgb(color.hexString);
+  switch (mainSelect.value) {
+    case "rgb":
+      mainInput1.value = mainColor[0];
+      mainInput2.value = mainColor[1];
+      mainInput3.value = mainColor[2];
+      break;
+    case "hex":
+      mainInput1.value = colorPicker.color.hexString;
+      break;
+    case "cmyk":
+      let temp = rgbToCmyk(...mainColor);
+      mainInput1.value = temp[0];
+      mainInput2.value = temp[1];
+      mainInput3.value = temp[2];
+      mainInput4.value = temp[3];
+      break;
+    case "xyz":
+      let temp1 = rgbToXyz(...mainColor);
+      mainInput1.value = temp1[0];
+      mainInput2.value = temp1[1];
+      mainInput3.value = temp1[2];
+      break;
+    case "lab":
+      let temp2 = rgbToLab(...mainColor);
+      mainInput1.value = temp2[0];
+      mainInput2.value = temp2[1];
+      mainInput3.value = temp2[2];
+      break;
+    case "hsv":
+      mainInput1.value = color.hsv["h"];
+      mainInput2.value = color.hsv["s"];
+      mainInput3.value = color.hsv["v"];
+      break;
+  }
+  btnPick.dispatchEvent(new Event("click"));
+});
 
 /* Валидаторы */
 
@@ -93,7 +138,6 @@ btnPick.addEventListener("click", () => {
         mainInput3.value = "0";
       }
       mainColor = [mainInput1.value, mainInput2.value, mainInput3.value];
-      mainBlock.style.backgroundColor = "rgb(" + mainColor.join(", ") + ")";
       break;
     case "hex":
       if (!isHex(mainInput1.value)) {
@@ -101,7 +145,6 @@ btnPick.addEventListener("click", () => {
         mainInput1.value = "#000000";
       }
       mainColor = hexToRgb(mainInput1.value);
-      mainBlock.style.backgroundColor = rgbToHex(...mainColor);
       break;
     case "cmyk":
       if (
@@ -126,8 +169,6 @@ btnPick.addEventListener("click", () => {
         mainInput3.value,
         mainInput4.value
       );
-      mainBlock.style.backgroundColor =
-        "rgb(" + cmykToRgb(...rgbToCmyk(...mainColor)).join(", ") + ")";
       break;
     case "xyz":
       if (!isXyz(mainInput1.value, mainInput2.value, mainInput3.value)) {
@@ -141,8 +182,6 @@ btnPick.addEventListener("click", () => {
       mainColor = xyzToRgb(
         ...[mainInput1.value, mainInput2.value, mainInput3.value]
       );
-      mainBlock.style.backgroundColor =
-        "rgb(" + xyzToRgb(...rgbToXyz(...mainColor)).join(", ") + ")";
       break;
     case "lab":
       if (!isLab(mainInput1.value, mainInput2.value, mainInput3.value)) {
@@ -158,8 +197,6 @@ btnPick.addEventListener("click", () => {
         mainInput2.value,
         mainInput3.value
       );
-      mainBlock.style.backgroundColor =
-        "rgb(" + labToRgb(...rgbToLab(...mainColor)).join(", ") + ")";
       break;
     case "hsv":
       if (!isHsv(mainInput1.value, mainInput2.value, mainInput3.value)) {
@@ -175,10 +212,9 @@ btnPick.addEventListener("click", () => {
         mainInput2.value,
         mainInput3.value
       );
-      mainBlock.style.backgroundColor = "rgb(" + mainColor.join(", ") + ")";
       break;
   }
-
+  colorPicker.color.hexString = rgbToHex(...mainColor);
   color2Select.dispatchEvent(new Event("change"));
   color3Select.dispatchEvent(new Event("change"));
 });
@@ -195,7 +231,6 @@ mainSelect.addEventListener("change", () => {
       mainInput4.disabled = true;
       mainInput4.value = "";
       mainColor = [mainInput1.value, mainInput2.value, mainInput3.value];
-      mainBlock.style.backgroundColor = "rgb(" + mainColor.join(", ") + ")";
       break;
     case "hex":
       mainInput1.value = rgbToHex(...mainColor);
@@ -206,7 +241,6 @@ mainSelect.addEventListener("change", () => {
       mainInput3.value = "";
       mainInput4.disabled = true;
       mainInput4.value = "";
-      mainBlock.style.backgroundColor = rgbToHex(...mainColor);
       break;
     case "cmyk":
       mainInput1.disabled = false;
@@ -223,8 +257,6 @@ mainSelect.addEventListener("change", () => {
         mainInput3.value,
         mainInput4.value
       );
-      mainBlock.style.backgroundColor =
-        "rgb(" + cmykToRgb(...rgbToCmyk(...mainColor)).join(", ") + ")";
       break;
     case "xyz":
       mainInput1.disabled = false;
@@ -238,8 +270,6 @@ mainSelect.addEventListener("change", () => {
       mainColor = xyzToRgb(
         ...[mainInput1.value, mainInput2.value, mainInput3.value]
       );
-      mainBlock.style.backgroundColor =
-        "rgb(" + xyzToRgb(...rgbToXyz(...mainColor)).join(", ") + ")";
       break;
     case "lab":
       mainInput1.disabled = false;
@@ -255,8 +285,6 @@ mainSelect.addEventListener("change", () => {
         mainInput2.value,
         mainInput3.value
       );
-      mainBlock.style.backgroundColor =
-        "rgb(" + labToRgb(...rgbToLab(...mainColor)).join(", ") + ")";
       break;
     case "hsv":
       mainInput1.disabled = false;
@@ -272,8 +300,6 @@ mainSelect.addEventListener("change", () => {
         mainInput2.value,
         mainInput3.value
       );
-      mainBlock.style.backgroundColor =
-        "rgb(" + hsvToRgb(...rgbToHsv(...mainColor)).join(", ") + ")";
       break;
   }
   changeLetters(mainSelect.value);
