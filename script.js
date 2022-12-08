@@ -593,11 +593,13 @@ function hsvToRgb(h, s, v) {
 copy2Btn.addEventListener("click", () => {
   navigator.clipboard.writeText(colorText2.value);
   alert("Код " + color2Select.value + " скопирован в буфер обмена.");
+  navigator.clipboard.writeText(colorText2.value);
 });
 
 copy3Btn.addEventListener("click", () => {
   navigator.clipboard.writeText(colorText3.value);
   alert("Код " + color3Select.value + " скопирован в буфер обмена.");
+  navigator.clipboard.writeText(colorText3.value);
 });
 
 /* Изменение инпутов у 2 и 3 блока */
