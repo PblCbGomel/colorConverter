@@ -30,7 +30,7 @@ let color2 = [0, 0, 0];
 let color3 = [0, 0, 0];
 
 colorPicker.on("color:change", function (color) {
-  mainColor = hexToRgb(color.hexString);
+  mainColor = [color.rgb["r"], color.rgb["g"], color.rgb["b"]];
   switch (mainSelect.value) {
     case "rgb":
       mainInput1.value = mainColor[0];
@@ -60,9 +60,14 @@ colorPicker.on("color:change", function (color) {
       mainInput3.value = temp2[2];
       break;
     case "hsv":
-      mainInput1.value = color.hsv["h"];
-      mainInput2.value = color.hsv["s"];
-      mainInput3.value = color.hsv["v"];
+      mainInput1.value = Math.round(color.hsv["h"]);
+      mainInput2.value = Math.round(color.hsv["s"]);
+      mainInput3.value = Math.round(color.hsv["v"]);
+      break;
+    case "hsl":
+      mainInput1.value = color.hsl["h"];
+      mainInput2.value = color.hsl["s"];
+      mainInput3.value = color.hsl["l"];
       break;
   }
   btnPick.dispatchEvent(new Event("click"));
@@ -123,6 +128,10 @@ function isLab(l, a, b) {
 
 function isHsv(h, s, v) {
   return 0 <= h && h <= 360 && 0 <= s && s <= 100 && 0 <= v && v <= 100;
+}
+
+function isHsl(h, s, l) {
+  return 0 <= h && h <= 360 && 0 <= s && s <= 100 && 0 <= l && l <= 100;
 }
 
 /* Отлавливание изменений */
@@ -214,6 +223,20 @@ btnPick.addEventListener("click", () => {
         mainInput3.value
       );
       break;
+    case "hsl":
+      if (!isHsl(mainInput1.value, mainInput2.value, mainInput3.value)) {
+        alert(
+          "Неверно введены данные: валидные значения 0 <= H <= 360, 0 <= s <= 100, 0 <= v <= 100."
+        );
+        mainInput1.value = "0";
+        mainInput2.value = "0";
+        mainInput3.value = "0";
+      }
+      mainColor = hsvToRgb(
+        mainInput1.value,
+        mainInput2.value,
+        mainInput3.value
+      );
   }
   colorPicker.color.hexString = rgbToHex(...mainColor);
   color2Select.dispatchEvent(new Event("change"));
@@ -302,6 +325,15 @@ mainSelect.addEventListener("change", () => {
         mainInput3.value
       );
       break;
+    case "hsl":
+      mainInput1.disabled = false;
+      mainInput1.value = colorPicker.color.hsl["h"];
+      mainInput2.disabled = false;
+      mainInput2.value = colorPicker.color.hsl["s"];
+      mainInput3.disabled = false;
+      mainInput3.value = colorPicker.color.hsl["l"];
+      mainInput4.disabled = true;
+      mainInput4.value = "";
   }
   changeLetters(mainSelect.value);
 });
@@ -349,6 +381,16 @@ color2Select.addEventListener("change", () => {
       color2Block.style.backgroundColor =
         "rgb(" + hsvToRgb(...rgbToHsv(...color2)).join(", ") + ")";
       break;
+    case "hsl":
+      color2 = mainColor;
+
+      colorText2.value =
+        colorPicker.color.hsl["h"] +
+        ", " +
+        colorPicker.color.hsl["s"] +
+        ", " +
+        colorPicker.color.hsl["l"];
+      color2Block.style.backgroundColor = colorPicker.color.rgbString;
   }
 });
 
@@ -394,6 +436,16 @@ color3Select.addEventListener("change", () => {
       color3Block.style.backgroundColor =
         "rgb(" + hsvToRgb(...rgbToHsv(...color3)).join(", ") + ")";
       break;
+    case "hsl":
+      color2 = mainColor;
+
+      colorText2.value =
+        colorPicker.color.hsl["h"] +
+        ", " +
+        colorPicker.color.hsl["s"] +
+        ", " +
+        colorPicker.color.hsl["l"];
+      color2Block.style.backgroundColor = colorPicker.color.rgbString;
   }
 });
 
@@ -409,19 +461,14 @@ function rgbToHex(r, g, b) {
 }
 
 function rgbToCmyk(r, g, b) {
-  let c = 1 - r / 255;
-  let m = 1 - g / 255;
-  let y = 1 - b / 255;
-  let k = Math.min(c, Math.min(m, y));
+  r = r / 255;
+  g = g / 255;
+  b = b / 255;
+  let k = 1 - Math.max(r, Math.max(g, b));
 
-  c = (c - k) / (1 - k);
-  m = (m - k) / (1 - k);
-  y = (y - k) / (1 - k);
-
-  c = isNaN(c) ? 0 : c;
-  m = isNaN(m) ? 0 : m;
-  y = isNaN(y) ? 0 : y;
-  k = isNaN(k) ? 0 : k;
+  let c = (1 - r - k) / (1 - k);
+  let m = (1 - g - k) / (1 - k);
+  let y = (1 - b - k) / (1 - k);
 
   return [
     Math.round(c * 100),
@@ -509,16 +556,11 @@ function cmykToRgb(c, m, y, k) {
   m = m / 100;
   y = y / 100;
   k = k / 100;
+  let r = 255 * (1 - c) * (1 - k);
+  let g = 255 * (1 - m) * (1 - k);
+  let b = 255 * (1 - y) * (1 - k);
 
-  c = c * (1 - k) + k;
-  m = m * (1 - k) + k;
-  y = y * (1 - k) + k;
-
-  let r = 1 - c;
-  let g = 1 - m;
-  let b = 1 - y;
-
-  return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+  return [Math.round(r), Math.round(g), Math.round(b)];
 }
 
 function fXyzRgb(x) {
@@ -897,5 +939,10 @@ function changeLetters(codeName) {
       label3.innerHTML = "V";
       label4.innerHTML = "";
       break;
+    case "hsl":
+      label1.innerHTML = "H";
+      label2.innerHTML = "S";
+      label3.innerHTML = "L";
+      label4.innerHTML = "";
   }
 }
