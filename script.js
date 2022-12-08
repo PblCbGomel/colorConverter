@@ -3,7 +3,7 @@ const colorPicker = new iro.ColorPicker(".main-color-block", {
   color: "rgb(0, 0, 0)",
   borderWidth: 1,
   borderColor: "#fff",
-  activeHandleRadius: 12,
+  activeHandleRadius: 8,
 });
 const btnPick = document.querySelector(".pick");
 const mainSelect = document.querySelector(".main-color-select");
