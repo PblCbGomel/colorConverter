@@ -3,6 +3,7 @@ const colorPicker = new iro.ColorPicker(".main-color-block", {
   color: "rgb(0, 0, 0)",
   borderWidth: 1,
   borderColor: "#fff",
+  activeHandleRadius: 12,
 });
 const btnPick = document.querySelector(".pick");
 const mainSelect = document.querySelector(".main-color-select");
@@ -602,7 +603,6 @@ copy3Btn.addEventListener("click", () => {
 /* Изменение инпутов у 2 и 3 блока */
 
 function changeAllColor(colorsOptions) {
-  console.log(colorsOptions);
   switch (mainSelect.value) {
     case "rgb":
       mainInput1.value = colorsOptions[0];
@@ -646,7 +646,12 @@ function changeAllColor(colorsOptions) {
 colorText2.addEventListener("change", () => {
   switch (color2Select.value) {
     case "rgb":
-      let rgb = colorText2.value.split(",").map((elem) => Number(elem));
+      let rgb = colorText2.value.split(",");
+
+      rgb[0] = Number(rgb[0].split("(")[1]);
+      rgb[1] = Number(rgb[1]);
+      rgb[2] = Number(rgb[2].split(")")[0]);
+
       if (!isRgb(...rgb)) {
         alert(
           "Неверно введены данные: значения в RGB должны быть не меньше 0 и не больше 255."
@@ -747,7 +752,12 @@ colorText2.addEventListener("change", () => {
 colorText3.addEventListener("change", () => {
   switch (color3Select.value) {
     case "rgb":
-      let rgb = colorText3.value.split(",").map((elem) => Number(elem));
+      let rgb = colorText3.value.split(",");
+
+      rgb[0] = Number(rgb[0].split("(")[1]);
+      rgb[1] = Number(rgb[1]);
+      rgb[2] = Number(rgb[2].split(")")[0]);
+
       if (!isRgb(...rgb)) {
         alert(
           "Неверно введены данные: значения в RGB должны быть не меньше 0 и не больше 255."
