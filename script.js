@@ -1,6 +1,6 @@
 const colorPicker = new iro.ColorPicker(".main-color-block", {
   width: 120,
-  color: "rgb(0, 0, 0)",
+  color: "rgb(255, 255, 255)",
   borderWidth: 1,
   borderColor: "#fff",
   activeHandleRadius: 8,
@@ -24,353 +24,351 @@ const label1 = document.querySelector(".label-1");
 const label2 = document.querySelector(".label-2");
 const label3 = document.querySelector(".label-3");
 const label4 = document.querySelector(".label-4");
+const colorPickerB = document.querySelector(".main-color-block");
+let mainChange = true;
 
-let mainColor = [0, 0, 0];
-let color2 = [0, 0, 0];
-let color3 = [0, 0, 0];
+/* Начальные данные */
 
-colorPicker.on("color:change", function (color) {
-  mainColor = [color.rgb["r"], color.rgb["g"], color.rgb["b"]];
+mainInput1.value = colorPicker.color.rgb["r"];
+mainInput2.value = colorPicker.color.rgb["g"];
+mainInput3.value = colorPicker.color.rgb["b"];
+color2Block.style.backgroundColor = colorPicker.color.rgbString;
+color3Block.style.backgroundColor = colorPicker.color.rgbString;
+
+/* Копирование текста с 2-го и 3-го цветов */
+
+copy2Btn.addEventListener("click", () => {
+  navigator.clipboard.writeText(colorText2.value);
+  alert("Код " + color2Select.value + " скопирован в буфер обмена.");
+  navigator.clipboard.writeText(colorText2.value);
+});
+
+copy3Btn.addEventListener("click", () => {
+  navigator.clipboard.writeText(colorText3.value);
+  alert("Код " + color3Select.value + " скопирован в буфер обмена.");
+  navigator.clipboard.writeText(colorText3.value);
+});
+
+/* Изменение main */
+
+function changeMainInputs() {
   switch (mainSelect.value) {
     case "rgb":
-      mainInput1.value = mainColor[0];
-      mainInput2.value = mainColor[1];
-      mainInput3.value = mainColor[2];
+      mainInput1.value = colorPicker.color.rgb["r"];
+      mainInput2.value = colorPicker.color.rgb["g"];
+      mainInput3.value = colorPicker.color.rgb["b"];
       break;
     case "hex":
       mainInput1.value = colorPicker.color.hexString;
       break;
     case "cmyk":
-      let temp = rgbToCmyk(...mainColor);
-      mainInput1.value = temp[0];
-      mainInput2.value = temp[1];
-      mainInput3.value = temp[2];
-      mainInput4.value = temp[3];
+      let cmykArr = rgbToCmyk(
+        colorPicker.color.rgb["r"],
+        colorPicker.color.rgb["g"],
+        colorPicker.color.rgb["b"]
+      );
+      mainInput1.value = cmykArr[0];
+      mainInput2.value = cmykArr[1];
+      mainInput3.value = cmykArr[2];
+      mainInput4.value = cmykArr[3];
       break;
     case "xyz":
-      let temp1 = rgbToXyz(...mainColor);
-      mainInput1.value = temp1[0];
-      mainInput2.value = temp1[1];
-      mainInput3.value = temp1[2];
+      let xyzArr = rgbToCmyk(
+        colorPicker.color.rgb["r"],
+        colorPicker.color.rgb["g"],
+        colorPicker.color.rgb["b"]
+      );
+      mainInput1.value = xyzArr[0];
+      mainInput2.value = xyzArr[1];
+      mainInput3.value = xyzArr[2];
       break;
     case "lab":
-      let temp2 = rgbToLab(...mainColor);
-      mainInput1.value = temp2[0];
-      mainInput2.value = temp2[1];
-      mainInput3.value = temp2[2];
+      let labArr = rgbToLab(
+        colorPicker.color.rgb["r"],
+        colorPicker.color.rgb["g"],
+        colorPicker.color.rgb["b"]
+      );
+      mainInput1.value = labArr[0];
+      mainInput2.value = labArr[1];
+      mainInput3.value = labArr[2];
       break;
     case "hsv":
-      mainInput1.value = Math.round(color.hsv["h"]);
-      mainInput2.value = Math.round(color.hsv["s"]);
-      mainInput3.value = Math.round(color.hsv["v"]);
+      let hsvArr = rgbToHsv(
+        colorPicker.color.rgb["r"],
+        colorPicker.color.rgb["g"],
+        colorPicker.color.rgb["b"]
+      );
+      mainInput1.value = hsvArr[0];
+      mainInput2.value = hsvArr[1];
+      mainInput3.value = hsvArr[2];
       break;
     case "hsl":
-      mainInput1.value = color.hsl["h"];
-      mainInput2.value = color.hsl["s"];
-      mainInput3.value = color.hsl["l"];
+      mainInput1.value = colorPicker.color.hsv["h"];
+      mainInput2.value = colorPicker.color.hsv["s"];
+      mainInput3.value = colorPicker.color.hsv["v"];
       break;
   }
-  btnPick.dispatchEvent(new Event("click"));
+}
+
+colorPicker.on("color:change", function () {
+  if (mainChange) {
+    changeMainInputs();
+  }
+
+  change2ndModel();
+  change3ndModel();
+  mainChange = true;
 });
 
-/* Валидаторы */
-
-function isRgb(r, g, b) {
-  if (0 <= r && r <= 255 && 0 <= g && g <= 255 && 0 <= b && b <= 255) {
-    return true;
-  }
-  return false;
-}
-
-function isHex(str) {
-  str = String(str);
-  let tempArray = str.substring(1).split("");
-  let flag = false;
-
-  tempArray.forEach((elem) => {
-    if (
-      !(
-        (0 <= elem && elem <= 9) ||
-        ("a" <= elem && "f" <= elem) ||
-        ("A" <= elem && "F" <= elem)
-      )
-    ) {
-      flag = true;
-    }
-  });
-
-  if (str.charAt(0) !== "#" || str.length !== 7 || flag) {
-    return false;
-  }
-  return true;
-}
-
-function isCmyk(c, m, y, k) {
-  return (
-    0 <= c &&
-    c <= 100 &&
-    0 <= m &&
-    m <= 100 &&
-    0 <= y &&
-    y <= 100 &&
-    0 <= k &&
-    k <= 100
-  );
-}
-
-function isXyz(x, y, z) {
-  return 0 <= x && x <= 95.047 && 0 <= y && y <= 100 && 0 <= z && z <= 108.883;
-}
-
-function isLab(l, a, b) {
-  return 0 <= l && l <= 100 && -128 <= a && a <= 128 && -128 <= b && b <= 128;
-}
-
-function isHsv(h, s, v) {
-  return 0 <= h && h <= 360 && 0 <= s && s <= 100 && 0 <= v && v <= 100;
-}
-
-function isHsl(h, s, l) {
-  return 0 <= h && h <= 360 && 0 <= s && s <= 100 && 0 <= l && l <= 100;
-}
-
-/* Отлавливание изменений */
-
 btnPick.addEventListener("click", () => {
+  mainChange = false;
   switch (mainSelect.value) {
     case "rgb":
-      if (!isRgb(mainInput1.value, mainInput2.value, mainInput3.value)) {
-        alert(
-          "Неверно введены данные: значения в RGB должны быть не меньше 0 и не больше 255."
-        );
-        mainInput1.value = "0";
-        mainInput2.value = "0";
-        mainInput3.value = "0";
+      if (isRgb(mainInput1.value, mainInput2.value, mainInput3.value)) {
+        colorPicker.color.rgb = {
+          r: mainInput1.value,
+          g: mainInput2.value,
+          b: mainInput3.value,
+        };
       }
-      mainColor = [mainInput1.value, mainInput2.value, mainInput3.value];
       break;
     case "hex":
-      if (!isHex(mainInput1.value)) {
-        alert("Неверно введены данные: кодировка Hex имеет вид #123456");
-        mainInput1.value = "#000000";
+      if (isHex(mainInput1.value)) {
+        colorPicker.color.hexString = mainInput1.value;
       }
-      mainColor = hexToRgb(mainInput1.value);
       break;
     case "cmyk":
       if (
-        !isCmyk(
+        isCmyk(
           mainInput1.value,
           mainInput2.value,
           mainInput3.value,
           mainInput4.value
         )
       ) {
-        alert(
-          "Неверно введены данные: значения в CMYK должны быть не меньше 0% и не больше 100%."
+        let rgbArr = cmykToRgb(
+          mainInput1.value,
+          mainInput2.value,
+          mainInput3.value,
+          mainInput4.value
         );
-        mainInput1.value = "0";
-        mainInput2.value = "0";
-        mainInput3.value = "0";
-        mainInput4.value = "100";
+        colorPicker.color.rgb = {
+          r: rgbArr[0],
+          g: rgbArr[1],
+          b: rgbArr[2],
+        };
       }
-      mainColor = cmykToRgb(
-        mainInput1.value,
-        mainInput2.value,
-        mainInput3.value,
-        mainInput4.value
-      );
       break;
     case "xyz":
-      if (!isXyz(mainInput1.value, mainInput2.value, mainInput3.value)) {
-        alert(
-          "Неверно введены данные: валидные значения 0 <= x <= 95.047, 0 <= y <= 100, 0 <= z <= 108.883."
+      if (isXyz(mainInput1.value, mainInput2.value, mainInput3.value)) {
+        let rgbArr = xyzToRgb(
+          mainInput1.value,
+          mainInput2.value,
+          mainInput3.value
         );
-        mainInput1.value = "0";
-        mainInput2.value = "0";
-        mainInput3.value = "0";
+        colorPicker.color.rgb = {
+          r: rgbArr[0],
+          g: rgbArr[1],
+          b: rgbArr[2],
+        };
       }
-      mainColor = xyzToRgb(
-        ...[mainInput1.value, mainInput2.value, mainInput3.value]
-      );
       break;
     case "lab":
-      if (!isLab(mainInput1.value, mainInput2.value, mainInput3.value)) {
-        alert(
-          "Неверно введены данные: валидные значения 0 <= L <= 100, -128 <= y <= 128, -128 <= z <= 128."
+      if (isLab(mainInput1.value, mainInput2.value, mainInput3.value)) {
+        let rgbArr = labToRgb(
+          mainInput1.value,
+          mainInput2.value,
+          mainInput3.value
         );
-        mainInput1.value = "0";
-        mainInput2.value = "0";
-        mainInput3.value = "0";
+        colorPicker.color.rgb = {
+          r: rgbArr[0],
+          g: rgbArr[1],
+          b: rgbArr[2],
+        };
       }
-      mainColor = labToRgb(
-        mainInput1.value,
-        mainInput2.value,
-        mainInput3.value
-      );
       break;
     case "hsv":
-      if (!isHsv(mainInput1.value, mainInput2.value, mainInput3.value)) {
-        alert(
-          "Неверно введены данные: валидные значения 0 <= H <= 360, 0 <= s <= 100, 0 <= v <= 100."
+      if (isHsv(mainInput1.value, mainInput2.value, mainInput3.value)) {
+        let rgbArr = hsvToRgb(
+          mainInput1.value,
+          mainInput2.value,
+          mainInput3.value
         );
-        mainInput1.value = "0";
-        mainInput2.value = "0";
-        mainInput3.value = "0";
+        colorPicker.color.rgb = {
+          r: rgbArr[0],
+          g: rgbArr[1],
+          b: rgbArr[2],
+        };
       }
-      mainColor = hsvToRgb(
-        mainInput1.value,
-        mainInput2.value,
-        mainInput3.value
-      );
       break;
     case "hsl":
-      if (!isHsl(mainInput1.value, mainInput2.value, mainInput3.value)) {
-        alert(
-          "Неверно введены данные: валидные значения 0 <= H <= 360, 0 <= s <= 100, 0 <= v <= 100."
-        );
-        mainInput1.value = "0";
-        mainInput2.value = "0";
-        mainInput3.value = "0";
+      if (isHsl(mainInput1.value, mainInput2.value, mainInput3.value)) {
+        colorPicker.color.hsl = {
+          h: mainInput1.value,
+          s: mainInput2.value,
+          l: mainInput3.value,
+        };
       }
-      mainColor = hsvToRgb(
-        mainInput1.value,
-        mainInput2.value,
-        mainInput3.value
-      );
+      break;
   }
-  colorPicker.color.hexString = rgbToHex(...mainColor);
-  color2Select.dispatchEvent(new Event("change"));
-  color3Select.dispatchEvent(new Event("change"));
+
+  change2ndModel();
+  change3ndModel();
 });
 
 mainSelect.addEventListener("change", () => {
-  switch (mainSelect.value) {
-    case "rgb":
-      mainInput1.disabled = false;
-      mainInput1.value = mainColor[0];
-      mainInput2.disabled = false;
-      mainInput2.value = mainColor[1];
-      mainInput3.disabled = false;
-      mainInput3.value = mainColor[2];
-      mainInput4.disabled = true;
-      mainInput4.value = "";
-      mainColor = [mainInput1.value, mainInput2.value, mainInput3.value];
-      break;
-    case "hex":
-      mainInput1.value = rgbToHex(...mainColor);
-      mainInput1.disabled = false;
-      mainInput2.disabled = true;
-      mainInput2.value = "";
-      mainInput3.disabled = true;
-      mainInput3.value = "";
-      mainInput4.disabled = true;
-      mainInput4.value = "";
-      break;
-    case "cmyk":
-      mainInput1.disabled = false;
-      mainInput1.value = rgbToCmyk(...mainColor)[0];
-      mainInput2.disabled = false;
-      mainInput2.value = rgbToCmyk(...mainColor)[1];
-      mainInput3.disabled = false;
-      mainInput3.value = rgbToCmyk(...mainColor)[2];
-      mainInput4.disabled = false;
-      mainInput4.value = rgbToCmyk(...mainColor)[3];
-      mainColor = cmykToRgb(
-        mainInput1.value,
-        mainInput2.value,
-        mainInput3.value,
-        mainInput4.value
-      );
-      break;
-    case "xyz":
-      mainInput1.disabled = false;
-      mainInput1.value = rgbToXyz(...mainColor)[0];
-      mainInput2.disabled = false;
-      mainInput2.value = rgbToXyz(...mainColor)[1];
-      mainInput3.disabled = false;
-      mainInput3.value = rgbToXyz(...mainColor)[2];
-      mainInput4.disabled = true;
-      mainInput4.value = "";
-      mainColor = xyzToRgb(
-        ...[mainInput1.value, mainInput2.value, mainInput3.value]
-      );
-      break;
-    case "lab":
-      mainInput1.disabled = false;
-      mainInput1.value = rgbToLab(...mainColor)[0];
-      mainInput2.disabled = false;
-      mainInput2.value = rgbToLab(...mainColor)[1];
-      mainInput3.disabled = false;
-      mainInput3.value = rgbToLab(...mainColor)[2];
-      mainInput4.disabled = true;
-      mainInput4.value = "";
-      mainColor = labToRgb(
-        mainInput1.value,
-        mainInput2.value,
-        mainInput3.value
-      );
-      break;
-    case "hsv":
-      mainInput1.disabled = false;
-      mainInput1.value = rgbToHsv(...mainColor)[0];
-      mainInput2.disabled = false;
-      mainInput2.value = rgbToHsv(...mainColor)[1];
-      mainInput3.disabled = false;
-      mainInput3.value = rgbToHsv(...mainColor)[2];
-      mainInput4.disabled = true;
-      mainInput4.value = "";
-      mainColor = hsvToRgb(
-        mainInput1.value,
-        mainInput2.value,
-        mainInput3.value
-      );
-      break;
-    case "hsl":
-      mainInput1.disabled = false;
-      mainInput1.value = colorPicker.color.hsl["h"];
-      mainInput2.disabled = false;
-      mainInput2.value = colorPicker.color.hsl["s"];
-      mainInput3.disabled = false;
-      mainInput3.value = colorPicker.color.hsl["l"];
-      mainInput4.disabled = true;
-      mainInput4.value = "";
-  }
-  changeLetters(mainSelect.value);
+  changeMainInput(mainSelect.value);
 });
 
-color2Select.addEventListener("change", () => {
-  switch (color2Select.value) {
+/* Изменение букав у Input */
+
+function changeMainInput(codeName) {
+  switch (codeName) {
     case "rgb":
-      color2 = mainColor;
-      colorText2.value = "rgb(" + color2.join(", ") + ")";
-      color2Block.style.backgroundColor = colorText2.value;
+      label1.innerHTML = "R";
+      label2.innerHTML = "G";
+      label3.innerHTML = "B";
+      label4.innerHTML = "";
+      mainInput1.disabled = false;
+      mainInput1.value = colorPicker.color.rgb["r"];
+      mainInput2.disabled = false;
+      mainInput2.value = colorPicker.color.rgb["g"];
+      mainInput3.disabled = false;
+      mainInput3.value = colorPicker.color.rgb["b"];
+      mainInput4.disabled = true;
+      mainInput4.value = "";
       break;
     case "hex":
-      color2 = mainColor;
-      colorText2.value = rgbToHex(...color2);
-      color2Block.style.backgroundColor = colorText2.value;
+      label1.innerHTML = "";
+      label2.innerHTML = "";
+      label3.innerHTML = "";
+      label4.innerHTML = "";
+      mainInput1.disabled = false;
+      mainInput1.value = colorPicker.color.hexString;
+      mainInput2.disabled = true;
+      mainInput3.disabled = true;
+      mainInput4.disabled = true;
+      mainInput2.value = "";
+      mainInput3.value = "";
+      mainInput4.value = "";
       break;
     case "cmyk":
-      color2 = mainColor;
-      colorText2.value = rgbToCmyk(...color2).join("%, ") + "%";
-      color2Block.style.backgroundColor =
-        "rgb(" + cmykToRgb(...rgbToCmyk(...color2)).join(", ") + ")";
+      label1.innerHTML = "C";
+      label2.innerHTML = "M";
+      label3.innerHTML = "Y";
+      label4.innerHTML = "K";
+      let cmykArr = rgbToCmyk(
+        colorPicker.color.rgb["r"],
+        colorPicker.color.rgb["g"],
+        colorPicker.color.rgb["b"]
+      );
+      mainInput1.disabled = false;
+      mainInput1.value = cmykArr[0];
+      mainInput2.disabled = false;
+      mainInput2.value = cmykArr[1];
+      mainInput3.disabled = false;
+      mainInput3.value = cmykArr[2];
+      mainInput4.disabled = false;
+      mainInput4.value = cmykArr[3];
       break;
     case "xyz":
-      color2 = mainColor;
-      colorText2.value = rgbToXyz(...color2).join(", ");
-      color2Block.style.backgroundColor =
-        "rgb(" + xyzToRgb(...rgbToXyz(...color2)).join(", ") + ")";
+      label1.innerHTML = "X";
+      label2.innerHTML = "Y";
+      label3.innerHTML = "Z";
+      label4.innerHTML = "";
+      mainInput1.disabled = false;
+      mainInput2.disabled = false;
+      mainInput3.disabled = false;
+      mainInput4.disabled = true;
+      let xyzArr = rgbToCmyk(
+        colorPicker.color.rgb["r"],
+        colorPicker.color.rgb["g"],
+        colorPicker.color.rgb["b"]
+      );
+      mainInput1.value = xyzArr[0];
+      mainInput2.value = xyzArr[1];
+      mainInput3.value = xyzArr[2];
+      mainInput4.value = "";
       break;
     case "lab":
-      color2 = mainColor;
-      colorText2.value = rgbToLab(...color2).join(", ");
-      color2Block.style.backgroundColor =
-        "rgb(" + labToRgb(...rgbToLab(...color2)).join(", ") + ")";
+      label1.innerHTML = "L";
+      label2.innerHTML = "A";
+      label3.innerHTML = "B";
+      label4.innerHTML = "";
+      mainInput1.disabled = false;
+      mainInput2.disabled = false;
+      mainInput3.disabled = false;
+      mainInput4.disabled = true;
+      let labArr = rgbToLab(
+        colorPicker.color.rgb["r"],
+        colorPicker.color.rgb["g"],
+        colorPicker.color.rgb["b"]
+      );
+      mainInput1.value = labArr[0];
+      mainInput2.value = labArr[1];
+      mainInput3.value = labArr[2];
+      mainInput4.value = "";
       break;
     case "hsv":
-      color2 = mainColor;
+      label1.innerHTML = "H";
+      label2.innerHTML = "S";
+      label3.innerHTML = "V";
+      label4.innerHTML = "";
+      mainInput1.disabled = false;
+      mainInput2.disabled = false;
+      mainInput3.disabled = false;
+      mainInput4.disabled = true;
+      let hsvArr = rgbToHsv(
+        colorPicker.color.rgb["r"],
+        colorPicker.color.rgb["g"],
+        colorPicker.color.rgb["b"]
+      );
+      mainInput1.value = hsvArr[0];
+      mainInput2.value = hsvArr[1];
+      mainInput3.value = hsvArr[2];
+      mainInput4.value = "";
+      break;
+    case "hsl":
+      label1.innerHTML = "H";
+      label2.innerHTML = "S";
+      label3.innerHTML = "L";
+      label4.innerHTML = "";
+      mainInput1.disabled = false;
+      mainInput2.disabled = false;
+      mainInput3.disabled = false;
+      mainInput4.disabled = true;
+      mainInput1.value = colorPicker.color.hsv["h"];
+      mainInput2.value = colorPicker.color.hsv["s"];
+      mainInput3.value = colorPicker.color.hsv["v"];
+      mainInput4.value = "";
+  }
+}
 
+/* Изменение 2 и 3 модели */
+
+color2Select.addEventListener("change", () => {
+  let arrRgb = [
+    colorPicker.color.rgb["r"],
+    colorPicker.color.rgb["g"],
+    colorPicker.color.rgb["b"],
+  ];
+  switch (color2Select.value) {
+    case "rgb":
+      colorText2.value = colorPicker.color.rgbString;
+      break;
+    case "hex":
+      colorText2.value = colorPicker.color.hexString;
+      break;
+    case "cmyk":
+      colorText2.value = rgbToCmyk(...arrRgb).join("%, ") + "%";
+      break;
+    case "xyz":
+      colorText2.value = rgbToXyz(...arrRgb).join(", ");
+      break;
+    case "lab":
+      colorText2.value = rgbToLab(...arrRgb).join(", ");
+      break;
+    case "hsv":
       colorText2.value =
         rgbToHsv(mainInput1.value, mainInput2.value, mainInput3.value)[0] +
         ", " +
@@ -378,54 +376,41 @@ color2Select.addEventListener("change", () => {
         "%, " +
         rgbToHsv(mainInput1.value, mainInput2.value, mainInput3.value)[2] +
         "%";
-      color2Block.style.backgroundColor =
-        "rgb(" + hsvToRgb(...rgbToHsv(...color2)).join(", ") + ")";
       break;
     case "hsl":
-      color2 = mainColor;
-
       colorText2.value =
         colorPicker.color.hsl["h"] +
         ", " +
         colorPicker.color.hsl["s"] +
-        ", " +
-        colorPicker.color.hsl["l"];
-      color2Block.style.backgroundColor = colorPicker.color.rgbString;
+        "%, " +
+        colorPicker.color.hsl["l"] +
+        "%";
   }
 });
 
 color3Select.addEventListener("change", () => {
+  let arrRgb = [
+    colorPicker.color.rgb["r"],
+    colorPicker.color.rgb["g"],
+    colorPicker.color.rgb["b"],
+  ];
   switch (color3Select.value) {
     case "rgb":
-      color3 = mainColor;
-      colorText3.value = "rgb(" + color3.join(", ") + ")";
-      color3Block.style.backgroundColor = colorText3.value;
+      colorText3.value = colorPicker.color.rgbString;
       break;
     case "hex":
-      color3 = mainColor;
-      colorText3.value = rgbToHex(...color3);
-      color3Block.style.backgroundColor = colorText3.value;
+      colorText3.value = colorPicker.color.hexString;
       break;
     case "cmyk":
-      color3 = mainColor;
-      colorText3.value = rgbToCmyk(...color2).join("%, ") + "%";
-      color3Block.style.backgroundColor =
-        "rgb(" + cmykToRgb(...rgbToCmyk(...color3)).join(", ") + ")";
+      colorText3.value = rgbToCmyk(...arrRgb).join("%, ") + "%";
       break;
     case "xyz":
-      color3 = mainColor;
-      colorText3.value = rgbToXyz(...color3).join(", ");
-      color3Block.style.backgroundColor =
-        "rgb(" + xyzToRgb(...rgbToXyz(...color3)).join(", ") + ")";
+      colorText3.value = rgbToXyz(...arrRgb).join(", ");
       break;
     case "lab":
-      color3 = mainColor;
-      colorText3.value = rgbToLab(...color3).join(", ");
-      color3Block.style.backgroundColor =
-        "rgb(" + labToRgb(...rgbToLab(...color3)).join(", ") + ")";
+      colorText3.value = rgbToLab(...arrRgb).join(", ");
       break;
     case "hsv":
-      color3 = mainColor;
       colorText3.value =
         rgbToHsv(mainInput1.value, mainInput2.value, mainInput3.value)[0] +
         ", " +
@@ -433,32 +418,169 @@ color3Select.addEventListener("change", () => {
         "%, " +
         rgbToHsv(mainInput1.value, mainInput2.value, mainInput3.value)[2] +
         "%";
-      color3Block.style.backgroundColor =
-        "rgb(" + hsvToRgb(...rgbToHsv(...color3)).join(", ") + ")";
       break;
     case "hsl":
-      color2 = mainColor;
-
-      colorText2.value =
+      colorText3.value =
         colorPicker.color.hsl["h"] +
         ", " +
         colorPicker.color.hsl["s"] +
-        ", " +
-        colorPicker.color.hsl["l"];
-      color2Block.style.backgroundColor = colorPicker.color.rgbString;
+        "%, " +
+        colorPicker.color.hsl["l"] +
+        "%";
   }
 });
 
-/* Функции конвертирования */
-
-function componentToHex(c) {
-  var hex = Number(c).toString(16);
-  return hex.length == 1 ? "0" + hex : hex;
+function change2ndModel() {
+  color2Block.style.backgroundColor = colorPicker.color.rgbString;
+  color2Select.dispatchEvent(new Event("change"));
 }
 
-function rgbToHex(r, g, b) {
-  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+function change3ndModel() {
+  color3Block.style.backgroundColor = colorPicker.color.rgbString;
+  color3Select.dispatchEvent(new Event("change"));
 }
+
+colorText2.addEventListener("change", () => {
+  mainChange = false;
+  switch (color2Select.value) {
+    case "rgb":
+      let rgb = colorText2.value.split(",");
+      rgb[0] = Number(rgb[0].split("(")[1]);
+      rgb[1] = Number(rgb[1]);
+      rgb[2] = Number(rgb[2].split(")")[0]);
+
+      if (isRgb(...rgb)) {
+        color2Block.style.backgroundColor = colorText2.value;
+      }
+      break;
+    case "hex":
+      if (isHex(colorText2.value)) {
+        color2Block.style.backgroundColor = colorText2.value;
+      }
+      break;
+    case "cmyk":
+      let cmyk = (colorText2.value + ",")
+        .split("%,")
+        .map((elem) => Number(elem));
+      cmyk = cmyk.slice(0, 4);
+      if (isCmyk(...cmyk)) {
+        cmyk = cmykToRgb(...cmyk);
+        color2Block.style.backgroundColor =
+          "rgb(" + cmykToRgb(...rgbToCmyk(...cmyk)).join(", ") + ")";
+      }
+      break;
+    case "xyz":
+      let xyz = colorText2.value.split(",").map((elem) => Number(elem));
+      if (isXyz(...xyz)) {
+        xyz = xyzToRgb(...xyz);
+        color2Block.style.backgroundColor =
+          "rgb(" + xyzToRgb(...rgbToXyz(...xyz)).join(", ") + ")";
+      }
+      break;
+    case "lab":
+      let lab = colorText2.value.split(",").map((elem) => Number(elem));
+      if (isLab(...lab)) {
+        lab = labToRgb(...lab);
+        color2Block.style.backgroundColor =
+          "rgb(" + labToRgb(...rgbToLab(...lab)).join(", ") + ")";
+      }
+      break;
+    case "hsv":
+      let hsv = colorText2.value.split(",");
+      hsv = [hsv[0], hsv[1].split("%")[0], hsv[2].split("%")[0]].map((elem) =>
+        Number(elem)
+      );
+      if (isHsv(...hsv)) {
+        hsv = hsvToRgb(...hsv);
+        color2Block.style.backgroundColor =
+          "rgb(" + hsvToRgb(...rgbToHsv(...hsv)).join(", ") + ")";
+      }
+      break;
+    case "hsl":
+      let hsl = colorText2.value.split(",");
+      hsl = [hsl[0], hsl[1].split("%")[0], hsl[2].split("%")[0]].map((elem) =>
+        Number(elem)
+      );
+      if (isHsl(...hsl)) {
+        hsl = hsvToRgb(...hsl);
+        color2Block.style.backgroundColor =
+          "rgb(" + hsvToRgb(...rgbToHsv(...hsl)).join(", ") + ")";
+      }
+      break;
+  }
+});
+
+colorText3.addEventListener("change", () => {
+  mainChange = false;
+  switch (color3Select.value) {
+    case "rgb":
+      let rgb = colorText3.value.split(",");
+      rgb[0] = Number(rgb[0].split("(")[1]);
+      rgb[1] = Number(rgb[1]);
+      rgb[2] = Number(rgb[2].split(")")[0]);
+
+      if (isRgb(...rgb)) {
+        color3Block.style.backgroundColor = colorText3.value;
+      }
+      break;
+    case "hex":
+      if (isHex(colorText3.value)) {
+        color3Block.style.backgroundColor = colorText3.value;
+      }
+      break;
+    case "cmyk":
+      let cmyk = (colorText3.value + ",")
+        .split("%,")
+        .map((elem) => Number(elem));
+      cmyk = cmyk.slice(0, 4);
+      if (isCmyk(...cmyk)) {
+        cmyk = cmykToRgb(...cmyk);
+        color3Block.style.backgroundColor =
+          "rgb(" + cmykToRgb(...rgbToCmyk(...cmyk)).join(", ") + ")";
+      }
+      break;
+    case "xyz":
+      let xyz = colorText3.value.split(",").map((elem) => Number(elem));
+      if (isXyz(...xyz)) {
+        xyz = xyzToRgb(...xyz);
+        color3Block.style.backgroundColor =
+          "rgb(" + xyzToRgb(...rgbToXyz(...xyz)).join(", ") + ")";
+      }
+      break;
+    case "lab":
+      let lab = colorText3.value.split(",").map((elem) => Number(elem));
+      if (isLab(...lab)) {
+        lab = labToRgb(...lab);
+        color3Block.style.backgroundColor =
+          "rgb(" + labToRgb(...rgbToLab(...lab)).join(", ") + ")";
+      }
+      break;
+    case "hsv":
+      let hsv = colorText3.value.split(",");
+      hsv = [hsv[0], hsv[1].split("%")[0], hsv[2].split("%")[0]].map((elem) =>
+        Number(elem)
+      );
+      if (isHsv(...hsv)) {
+        hsv = hsvToRgb(...hsv);
+        color3Block.style.backgroundColor =
+          "rgb(" + hsvToRgb(...rgbToHsv(...hsv)).join(", ") + ")";
+      }
+      break;
+    case "hsl":
+      let hsl = colorText3.value.split(",");
+      hsl = [hsl[0], hsl[1].split("%")[0], hsl[2].split("%")[0]].map((elem) =>
+        Number(elem)
+      );
+      if (isHsl(...hsl)) {
+        hsl = hsvToRgb(...hsl);
+        color3Block.style.backgroundColor =
+          "rgb(" + hsvToRgb(...rgbToHsv(...hsl)).join(", ") + ")";
+      }
+      break;
+  }
+});
+
+/* Конвертеры */
 
 function rgbToCmyk(r, g, b) {
   r = r / 255;
@@ -471,10 +593,10 @@ function rgbToCmyk(r, g, b) {
   let y = (1 - b - k) / (1 - k);
 
   return [
-    Math.round(c * 100),
-    Math.round(m * 100),
-    Math.round(y * 100),
-    Math.round(k * 100),
+    Math.round(c * 100) | 0,
+    Math.round(m * 100) | 0,
+    Math.round(y * 100) | 0,
+    Math.round(k * 100) | 0,
   ];
 }
 
@@ -548,14 +670,14 @@ function hexToRgb(c) {
   var g = (bigint >> 8) & 255;
   var b = bigint & 255;
 
-  return [r, g, b];
+  return [Math.round(r), Math.round(g), Math.round(b)];
 }
 
 function cmykToRgb(c, m, y, k) {
-  c = c / 100;
-  m = m / 100;
-  y = y / 100;
-  k = k / 100;
+  c /= 100;
+  m /= 100;
+  y /= 100;
+  k /= 100;
   let r = 255 * (1 - c) * (1 - k);
   let g = 255 * (1 - m) * (1 - k);
   let b = 255 * (1 - y) * (1 - k);
@@ -630,319 +752,97 @@ function hsvToRgb(h, s, v) {
   return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 }
 
-/* Копирование текста с 2-го и 3-го цветов */
+/* Валидаторы */
 
-copy2Btn.addEventListener("click", () => {
-  navigator.clipboard.writeText(colorText2.value);
-  alert("Код " + color2Select.value + " скопирован в буфер обмена.");
-  navigator.clipboard.writeText(colorText2.value);
-});
-
-copy3Btn.addEventListener("click", () => {
-  navigator.clipboard.writeText(colorText3.value);
-  alert("Код " + color3Select.value + " скопирован в буфер обмена.");
-  navigator.clipboard.writeText(colorText3.value);
-});
-
-/* Изменение инпутов у 2 и 3 блока */
-
-function changeAllColor(colorsOptions) {
-  switch (mainSelect.value) {
-    case "rgb":
-      mainInput1.value = colorsOptions[0];
-      mainInput2.value = colorsOptions[1];
-      mainInput3.value = colorsOptions[2];
-      break;
-    case "hex":
-      colorsOptions = rgbToHex(colorsOptions);
-      mainInput1.value = colorsOptions[0];
-      break;
-    case "cmyk":
-      colorsOptions = rgbToCmyk(colorsOptions);
-      mainInput1.value = colorsOptions[0];
-      mainInput2.value = colorsOptions[1];
-      mainInput3.value = colorsOptions[2];
-      mainInput4.value = colorsOptions[3];
-      break;
-    case "xyz":
-      colorsOptions = rgbToXyz(colorsOptions);
-      mainInput1.value = colorsOptions[0];
-      mainInput2.value = colorsOptions[1];
-      mainInput3.value = colorsOptions[2];
-      break;
-    case "lab":
-      colorsOptions = rgbToLab(colorsOptions);
-      mainInput1.value = colorsOptions[0];
-      mainInput2.value = colorsOptions[1];
-      mainInput3.value = colorsOptions[2];
-      break;
-    case "hsv":
-      colorsOptions = rgbToHsv(colorsOptions);
-      mainInput1.value = colorsOptions[0];
-      mainInput2.value = colorsOptions[1];
-      mainInput3.value = colorsOptions[2];
-      break;
+function isRgb(r, g, b) {
+  if (0 <= r && r <= 255 && 0 <= g && g <= 255 && 0 <= b && b <= 255) {
+    return true;
   }
-
-  btnPick.dispatchEvent(new Event("click"));
+  alert(
+    "Неверно введены данные: значения в RGB должны быть не меньше 0 и не больше 255."
+  );
+  return false;
 }
 
-colorText2.addEventListener("change", () => {
-  switch (color2Select.value) {
-    case "rgb":
-      let rgb = colorText2.value.split(",");
+function isHex(str) {
+  str = String(str);
+  let tempArray = str.substring(1).split("");
+  let flag = false;
 
-      rgb[0] = Number(rgb[0].split("(")[1]);
-      rgb[1] = Number(rgb[1]);
-      rgb[2] = Number(rgb[2].split(")")[0]);
+  tempArray.forEach((elem) => {
+    if (
+      !(
+        (0 <= elem && elem <= 9) ||
+        ("a" <= elem && "f" <= elem) ||
+        ("A" <= elem && "F" <= elem)
+      )
+    ) {
+      flag = true;
+    }
+  });
 
-      if (!isRgb(...rgb)) {
-        alert(
-          "Неверно введены данные: значения в RGB должны быть не меньше 0 и не больше 255."
-        );
-        rgb[0] = 0;
-        rgb[1] = 0;
-        rgb[2] = 0;
-      }
-      color2 = rgb;
-      colorText2.value = "rgb(" + color2.join(", ") + ")";
-      color2Block.style.backgroundColor = colorText2.value;
-      changeAllColor(color2);
-      break;
-    case "hex":
-      if (!isHex(colorText2.value)) {
-        alert("Неверно введены данные: кодировка Hex имеет вид #123456");
-        colorText2.value = "#000000";
-      }
-      color2 = hexToRgb(colorText2.value);
-      colorText2.value = rgbToHex(...color2);
-      color2Block.style.backgroundColor = colorText2.value;
-      changeAllColor(color2);
-      break;
-    case "cmyk":
-      let cmyk = (colorText2.value + ",")
-        .split("%,")
-        .map((elem) => Number(elem));
-      if (!isCmyk(...cmyk)) {
-        alert(
-          "Неверно введены данные: значения в CMYK должны быть не меньше 0% и не больше 100%."
-        );
-        cmyk[0] = "0";
-        cmyk[1] = "0";
-        cmyk[2] = "0";
-        cmyk[3] = "100";
-      }
-      cmyk = cmyk.slice(0, 4);
-      color2 = cmykToRgb(...cmyk);
-      colorText2.value = cmyk.join("%, ") + "%";
-      color2Block.style.backgroundColor =
-        "rgb(" + cmykToRgb(...rgbToCmyk(...color2)).join(", ") + ")";
-      changeAllColor(color2);
-      break;
-    case "xyz":
-      let xyz = colorText2.value.split(",").map((elem) => Number(elem));
-      if (!isXyz(...xyz)) {
-        alert(
-          "Неверно введены данные: валидные значения 0 <= x <= 95.047, 0 <= y <= 100, 0 <= z <= 108.883."
-        );
-        xyz[0] = "0";
-        xyz[1] = "0";
-        xyz[2] = "0";
-      }
-      color2 = xyzToRgb(...xyz);
-      colorText2.value = xyz.join(", ");
-      color2Block.style.backgroundColor =
-        "rgb(" + xyzToRgb(...rgbToXyz(...color2)).join(", ") + ")";
-      changeAllColor(color2);
-      break;
-    case "lab":
-      let lab = colorText2.value.split(",").map((elem) => Number(elem));
-      if (!isLab(...lab)) {
-        alert(
-          "Неверно введены данные: валидные значения 0 <= L <= 100, -128 <= y <= 128, -128 <= z <= 128."
-        );
-        lab[0] = "0";
-        lab[1] = "0";
-        lab[2] = "0";
-      }
-      color2 = labToRgb(...lab);
-      colorText2.value = lab.join(", ");
-      color2Block.style.backgroundColor =
-        "rgb(" + labToRgb(...rgbToLab(...color2)).join(", ") + ")";
-      changeAllColor(color2);
-      break;
-    case "hsv":
-      let hsv = colorText2.value.split(",");
-      hsv = [hsv[0], hsv[1].split("%")[0], hsv[2].split("%")[0]].map((elem) =>
-        Number(elem)
-      );
-      if (!isHsv(...hsv)) {
-        alert(
-          "Неверно введены данные: валидные значения 0 <= H <= 360, 0 <= s <= 100, 0 <= v <= 100."
-        );
-        hsv[0] = "0";
-        hsv[1] = "0";
-        hsv[2] = "0";
-      }
-      color2 = hsvToRgb(...hsv);
-      colorText2.value = hsv[0] + ", " + hsv[1] + "%, " + hsv[2] + "%";
-      color2Block.style.backgroundColor =
-        "rgb(" + hsvToRgb(...rgbToHsv(...color2)).join(", ") + ")";
-      changeAllColor(color2);
-      break;
+  if (str.charAt(0) !== "#" || str.length !== 7 || flag) {
+    alert("Неверно введены данные: кодировка Hex имеет вид #123456");
+    return false;
   }
-});
+  return true;
+}
 
-colorText3.addEventListener("change", () => {
-  switch (color3Select.value) {
-    case "rgb":
-      let rgb = colorText3.value.split(",");
-
-      rgb[0] = Number(rgb[0].split("(")[1]);
-      rgb[1] = Number(rgb[1]);
-      rgb[2] = Number(rgb[2].split(")")[0]);
-
-      if (!isRgb(...rgb)) {
-        alert(
-          "Неверно введены данные: значения в RGB должны быть не меньше 0 и не больше 255."
-        );
-        rgb[0] = 0;
-        rgb[1] = 0;
-        rgb[2] = 0;
-      }
-      color3 = rgb;
-      colorText3.value = color2.join(", ");
-      color3Block.style.backgroundColor = colorText3.value;
-      changeAllColor(color3);
-      break;
-    case "hex":
-      if (!isHex(colorText3.value)) {
-        alert("Неверно введены данные: кодировка Hex имеет вид #123456");
-        colorText3.value = "#000000";
-      }
-      color3 = hexToRgb(colorText3.value);
-      colorText3.value = rgbToHex(...color3);
-      color3Block.style.backgroundColor = colorText3.value;
-      changeAllColor(color3);
-      break;
-    case "cmyk":
-      let cmyk = (colorText3.value + ",")
-        .split("%,")
-        .map((elem) => Number(elem));
-      if (!isCmyk(...cmyk)) {
-        alert(
-          "Неверно введены данные: значения в CMYK должны быть не меньше 0% и не больше 100%."
-        );
-        cmyk[0] = "0";
-        cmyk[1] = "0";
-        cmyk[2] = "0";
-        cmyk[3] = "100";
-      }
-      cmyk = cmyk.slice(0, 4);
-      color3 = cmykToRgb(...cmyk);
-      colorText3.value = cmyk.join("%, ") + "%";
-      color3Block.style.backgroundColor =
-        "rgb(" + cmykToRgb(...rgbToCmyk(...color3)).join(", ") + ")";
-      changeAllColor(color3);
-      break;
-    case "xyz":
-      let xyz = colorText3.value.split(",").map((elem) => Number(elem));
-      if (!isXyz(...xyz)) {
-        alert(
-          "Неверно введены данные: валидные значения 0 <= x <= 95.047, 0 <= y <= 100, 0 <= z <= 108.883."
-        );
-        xyz[0] = "0";
-        xyz[1] = "0";
-        xyz[2] = "0";
-      }
-      color3 = xyzToRgb(...xyz);
-      colorText3.value = xyz.join(", ");
-      color3Block.style.backgroundColor =
-        "rgb(" + xyzToRgb(...rgbToXyz(...color3)).join(", ") + ")";
-      changeAllColor(color3);
-      break;
-    case "lab":
-      let lab = colorText3.value.split(",").map((elem) => Number(elem));
-      if (!isLab(...lab)) {
-        alert(
-          "Неверно введены данные: валидные значения 0 <= L <= 100, -128 <= y <= 128, -128 <= z <= 128."
-        );
-        lab[0] = "0";
-        lab[1] = "0";
-        lab[2] = "0";
-      }
-      color3 = labToRgb(...lab);
-      colorText3.value = lab.join(", ");
-      color3Block.style.backgroundColor =
-        "rgb(" + labToRgb(...rgbToLab(...color3)).join(", ") + ")";
-      changeAllColor(color3);
-      break;
-    case "hsv":
-      let hsv = colorText3.value.split(",");
-      hsv = [hsv[0], hsv[1].split("%")[0], hsv[2].split("%")[0]].map((elem) =>
-        Number(elem)
-      );
-      if (!isHsv(...hsv)) {
-        alert(
-          "Неверно введены данные: валидные значения 0 <= H <= 360, 0 <= s <= 100, 0 <= v <= 100."
-        );
-        hsv[0] = "0";
-        hsv[1] = "0";
-        hsv[2] = "0";
-      }
-      color3 = hsvToRgb(...hsv);
-      colorText3.value = hsv[0] + ", " + hsv[1] + "%, " + hsv[2] + "%";
-      color3Block.style.backgroundColor =
-        "rgb(" + hsvToRgb(...rgbToHsv(...color3)).join(", ") + ")";
-      changeAllColor(color3);
-      break;
+function isCmyk(c, m, y, k) {
+  if (
+    0 <= c &&
+    c <= 100 &&
+    0 <= m &&
+    m <= 100 &&
+    0 <= y &&
+    y <= 100 &&
+    0 <= k &&
+    k <= 100
+  ) {
+    return true;
   }
-});
+  alert(
+    "Неверно введены данные: значения в CMYK должны быть не меньше 0% и не больше 100%."
+  );
+  return false;
+}
 
-/* Изменение букав у Input */
-
-function changeLetters(codeName) {
-  switch (codeName) {
-    case "rgb":
-      label1.innerHTML = "R";
-      label2.innerHTML = "G";
-      label3.innerHTML = "B";
-      label4.innerHTML = "";
-      break;
-    case "hex":
-      label1.innerHTML = "";
-      label2.innerHTML = "";
-      label3.innerHTML = "";
-      label4.innerHTML = "";
-      break;
-    case "cmyk":
-      label1.innerHTML = "C";
-      label2.innerHTML = "M";
-      label3.innerHTML = "Y";
-      label4.innerHTML = "K";
-      break;
-    case "xyz":
-      label1.innerHTML = "X";
-      label2.innerHTML = "Y";
-      label3.innerHTML = "Z";
-      label4.innerHTML = "";
-      break;
-    case "lab":
-      label1.innerHTML = "L";
-      label2.innerHTML = "A";
-      label3.innerHTML = "B";
-      label4.innerHTML = "";
-      break;
-    case "hsv":
-      label1.innerHTML = "H";
-      label2.innerHTML = "S";
-      label3.innerHTML = "V";
-      label4.innerHTML = "";
-      break;
-    case "hsl":
-      label1.innerHTML = "H";
-      label2.innerHTML = "S";
-      label3.innerHTML = "L";
-      label4.innerHTML = "";
+function isXyz(x, y, z) {
+  if (0 <= x && x <= 95.047 && 0 <= y && y <= 100 && 0 <= z && z <= 108.883) {
+    return true;
   }
+  alert(
+    "Неверно введены данные: валидные значения 0 <= x <= 95.047, 0 <= y <= 100, 0 <= z <= 108.883."
+  );
+  return false;
+}
+
+function isLab(l, a, b) {
+  if (0 <= l && l <= 100 && -128 <= a && a <= 128 && -128 <= b && b <= 128) {
+    return true;
+  }
+  alert(
+    "Неверно введены данные: валидные значения 0 <= L <= 100, -128 <= y <= 128, -128 <= z <= 128."
+  );
+  return false;
+}
+
+function isHsv(h, s, v) {
+  if (0 <= h && h <= 360 && 0 <= s && s <= 100 && 0 <= v && v <= 100) {
+    return true;
+  }
+  alert(
+    "Неверно введены данные: валидные значения 0 <= H <= 360, 0 <= s <= 100, 0 <= v <= 100."
+  );
+  return false;
+}
+
+function isHsl(h, s, l) {
+  if (0 <= h && h <= 360 && 0 <= s && s <= 100 && 0 <= l && l <= 100) {
+    return true;
+  }
+  alert(
+    "Неверно введены данные: валидные значения 0 <= H <= 360, 0 <= s <= 100, 0 <= l <= 100."
+  );
+  return false;
 }
